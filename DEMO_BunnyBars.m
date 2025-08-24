@@ -2,8 +2,8 @@ clear; clc; close all
 
 %% load geometry
 % load input_meshes/small_bunny_mesh2D.mat;
-%load input_meshes/small_bunny_mesh2D_vfine.mat
-load input_meshes/small_bunny_mesh3D.mat;
+load input_meshes/small_bunny_mesh2D_vfine.mat
+%load input_meshes/small_bunny_mesh3D.mat;
 %load input_meshes/small_bunny_mesh3D_fine.mat;
 
 

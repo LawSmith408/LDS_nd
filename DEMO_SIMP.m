@@ -30,7 +30,7 @@ Emin = 1e-3;
 Emax = 1e3;
 rhomin = 1e-1;
 rhomax = 1-1e-1;
-p=2;
+p=3;
 
 for i = 1:8
 
@@ -43,29 +43,29 @@ eMat = Emin + rho.^p*(Emax-Emin);
 %compute stresses carried by each member
 S = deformedStressPlot(DT,D,eMat,0);
 
-if i>1 && plotme
 cla
 rhoPlot(DT,rho); 
 plotV(Vt(fixed,:),'b.','markersize',20)
 plotV(Vt(forced,:),'r.','markersize',20)
 drawnow();
-end
 
 %compute per-element compliance sensitivities
 %reference: https://link.springer.com/article/10.1007/s001580050176
 for j = 1:length(eMat)
     V = Vt(LI(j,:),:);
-    k = eMat(j)*barLocalStiffness(V);
+    [k,L] = barLocalStiffness(V);
     u = D(LI(j,:),:)';
-    dcdx(j) = p*rho(j)^(p-1)*(Emax-Emin)*u(:)'*k*u(:);
-    dvdx(j) = 0; %this is not correct - it should be the volume derivative
-    
-%MISSING THE REMAINDER OF THIS SECTION
-
+    dcdx(j) = p*rho(j)^(p-1)*(Emax-Emin)*u(:)'*eMat(j)*k*u(:);
+    dvdx(j) = L; %total lattice volume is Sigma (L_i * rho_i)
 end
+lambda = -1;
+nu = 0.5;
+Be = -dcdx./(lambda*dvdx);
+move = rho.*Be'.^nu;
+rho = rho + move;
 
-%update density
-rho = rho.*(rescale(dcdx(:)).^0.05);
+% %update density
+% rho = rho.*(rescale(dcdx(:)).^0.05);
 
 %saturate
 rho(rho<rhomin) = rhomin;
@@ -73,19 +73,19 @@ rho(rho>rhomax) = rhomax;
 
 end
 
-cla
-deformedDensityPlot(DT,D,rescale(rho)); 
-plotV(Vt(fixed,:),'b.','markersize',20)
-plotV(Vt(forced,:),'r.','markersize',20)
-drawnow();
+% cla
+% deformedDensityPlot(DT,D,rescale(rho)); 
+% plotV(Vt(fixed,:),'b.','markersize',20)
+% plotV(Vt(forced,:),'r.','markersize',20)
+% drawnow();
 
-function k = barLocalStiffness(V)
+function [k,l] = barLocalStiffness(V)
 
 %V is a 2xdim matrix of the [X Y (Z)] coords of a pair of points
 
 DV = diff(V);           %subtract the endpoints
-L = sqrt(sum(DV.^2));   %compute the length of this member
-C = DV/L;               %compute the cosine angles Cx Cy Cz
+l = sqrt(sum(DV.^2));   %compute the length of this member
+C = DV/l;               %compute the cosine angles Cx Cy Cz
 L = C'*C;               %stiffness submatrix lambda
 k = [L -L; -L L];       %full stiffness matrix
 
