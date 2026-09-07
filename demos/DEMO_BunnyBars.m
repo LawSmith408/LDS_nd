@@ -1,10 +1,11 @@
 clear; clc; close all
+setupLDS    %put src/, demos/ and input_meshes/ on the MATLAB path
 
 %% load geometry
-% load input_meshes/small_bunny_mesh2D.mat;
-load input_meshes/small_bunny_mesh2D_vfine.mat
-%load input_meshes/small_bunny_mesh3D.mat;
-%load input_meshes/small_bunny_mesh3D_fine.mat;
+% load small_bunny_mesh2D.mat
+load small_bunny_mesh2D_vfine.mat
+%load small_bunny_mesh3D.mat
+%load small_bunny_mesh3D_fine.mat
 
 
 %define boundary conditions

@@ -16,7 +16,7 @@
 %forced: vector containing the indices of the nodes which should be loaded.
 %If omited, all nodes with max x coordinate are loaded
 
-%load: a [dx1] vector containing the total force applied to the loaded
+%loadVec: a [dx1] vector containing the total force applied to the loaded
 %nodes. If omitted, d = [0 -1]' or [0 0 -1]' a unit force in the -vertical direction.
 %if dimension is [dxn] where n is the number of loaded nodes, individual
 %loads are applied to each n node
@@ -38,12 +38,12 @@ ID = reshape(1:numel(NC),dim,[])';  %Indexing schema
 %initialize materials
 eMat = ones(size(LI,1),1);
 
-%initialize load
-load = zeros(dim,1);
+%initialize load vector
+loadVec = zeros(dim,1);
 if dim == 2
-    load(end) = -5;
+    loadVec(end) = -5;
 else
-    load(end) = -100;
+    loadVec(end) = -100;
 end
 
 % Change these to indicate which points are forced and which are fixed
@@ -75,7 +75,7 @@ end
 
 if length(varargin)>3
     if ~isempty(varargin{4})
-        load = varargin{4};
+        loadVec = varargin{4};
     end
 end
 
@@ -86,10 +86,10 @@ free = free(:);
 
 % Construct load vector
 F = zeros(size(NC))';
-if size(load,2)==1 %if load direction is constant across all loaded nodes
-    F(:,forced) = F(:,forced)+load(:)./numel(forced);  %node-wise force is distributed load
+if size(loadVec,2)==1 %if load direction is constant across all loaded nodes
+    F(:,forced) = F(:,forced)+loadVec(:)./numel(forced);  %distribute the total load over the loaded nodes
 else
-    F(:,forced) = load; %constant load across all fored nodes
+    F(:,forced) = loadVec; %per-node loads supplied directly
 end
 F = F(:);        %reshape into a column vector
 
@@ -107,13 +107,20 @@ for j = 1:size(LI,1)
 end
 
 % Assemble global stiffness matrix as a sparse matrix
-K = sparse(IND(:,1),IND(:,2),K1); 
+K = sparse(IND(:,1),IND(:,2),K1,numel(NC),numel(NC));
 
-% Solve Linear Algebra Problem using Matlab Backslash (usually slower)
-%d = K(free,free)\F(free); %Generalized linear solve
-
-%Iterative Solve by Conjugate Gradient Method (usually faster)
-[d,~,relres,iter] = pcg(K(free,free),F(free),1e-3,1e6);
+% Solve the reduced system. Preconditioned conjugate gradients is usually
+% faster than backslash, but it can stagnate on badly conditioned systems
+% (e.g. a SIMP design with a wide Emin:Emax ratio), so fall back to a
+% direct solve whenever it fails to converge.
+Kff = K(free,free);
+[d,flag,relres,iter] = pcg(Kff,F(free),1e-8,1e4);
+if flag ~= 0
+    warning('LDS:pcgFailed',...
+        ['pcg did not converge (flag %d, relres %.2e after %d iters); '...
+         'falling back to a direct solve.'],flag,relres,iter);
+    d = Kff\F(free);
+end
 
 % Augment displacement matrix with known DOF
 D = zeros(numel(NC),1);
@@ -122,17 +129,5 @@ C = F'*D;                   %compute compliance
 D = reshape(D,dim,[])';     %reshape into same dimensionality as NC
 
 fprintf('Solved %.i DOF in %.3fs, Compliance = %.2e\n',numel(d),toc,C)
-
-end
-
-function k = barLocalStiffness(V)
-
-%V is a 2xdim matrix of the [X Y (Z)] coords of a pair of points
-
-DV = diff(V);           %subtract the endpoints
-L = sqrt(sum(DV.^2));   %compute the length of this member
-C = DV/L;               %compute the cosine angles Cx Cy Cz
-L = C'*C;               %stiffness submatrix lambda
-k = [L -L; -L L];       %full stiffness matrix
 
 end

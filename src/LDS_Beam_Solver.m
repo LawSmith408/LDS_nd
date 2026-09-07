@@ -24,7 +24,7 @@ function U = LDS_Beam_Solver(DT,varargin)
 %forced: vector containing the indices of the nodes which should be loaded.
 %If omited, all nodes with max x coordinate are loaded
 
-%load: a [dx1] vector containing the total force applied to the loaded
+%loadVec: a [dx1] vector containing the total force applied to the loaded
 %nodes. If omitted, d = [0 -1]' or [0 0 -1]' a unit force in the -vertical direction.
 %if dimension is [dxn] where n is the number of loaded nodes, individual
 %loads are applied to each n node
@@ -40,10 +40,10 @@ nu = 0.33;              %Poisson's Ratio
 E = ones(size(LI,1),1);
 d_vec = ones(size(LI,1),1);
 
-%initialize load
-load = zeros(dim,1);
+%initialize load vector
+loadVec = zeros(dim,1);
 if dim == 2
-    load(end) = -1;
+    loadVec(end) = -1;
 end
 
 % Change these to indicate which points are forced and which are fixed
@@ -85,7 +85,7 @@ end
 
 if length(varargin)>4
     if ~isempty(varargin{5})
-        load = varargin{5};
+        loadVec = varargin{5};
     end
 end
 
@@ -104,15 +104,15 @@ Re(fixed,:) = 1;
 
 %apply nodal loads
 Load = zeros(n,6); 
-Load(forced,1:length(load)) = load(:)'; %Apply load
+Load(forced,1:length(loadVec)) = loadVec(:)'; %Apply load
 w = zeros(m,3);
 
 %compute section properties
 G = E./(2*(1+nu));
 A = pi*d_vec.^2/4;
-Iz = pi*d_vec^4/64;
-Iy = pi*d_vec^4/64;
-J = pi*d_vec^4/32;
+Iz = pi*d_vec.^4/64;
+Iy = pi*d_vec.^4/64;
+J = pi*d_vec.^4/32;
 St = zeros(n,6);
 be = zeros(1,m);
 

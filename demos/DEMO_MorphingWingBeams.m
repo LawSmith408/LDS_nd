@@ -4,6 +4,7 @@
 %depenencies: GIBBON https://www.gibboncode.org/Installation/
 
 clear; clc; close all
+setupLDS    %put src/, demos/ and input_meshes/ on the MATLAB path
 
 %% Define Load Conditions
 %nose cone material properties
@@ -28,11 +29,12 @@ pointSpacing = 0.02;              %node spacing in mesh
 stdP=0.25*pointSpacing*ones(1,2);    %randomness in mesh
 [Ft,Vt,boundaryNodes]=regionTriMesh2D({V},pointSpacing,0,0);
 
-%identify nodes which will be constrained
-fixed = find(Vt(boundaryNodes(:,1),2)<2*eps);
-
-%identify nodes which will be loaded
-forced = find(Vt(boundaryNodes(:,1),2)>0);
+%identify nodes which will be constrained / loaded. boundaryNodes holds
+%GLOBAL node indices, so index INTO it -- find() alone would return
+%positions within the boundary subset, not node numbers.
+bnd    = boundaryNodes(:);
+fixed  = bnd(Vt(bnd,2)<2*eps);   %base of the cone
+forced = bnd(Vt(bnd,2)>0);       %cone surface
 
 %plot the nosecone
 patch('Faces',Ft,'Vertices',Vt,'facecolor','none','linewidth',...

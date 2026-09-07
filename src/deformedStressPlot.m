@@ -8,10 +8,10 @@ if length(eMat)==1
 end
 
 %compute element lengths
-L0 = arrayfun(@(i) sqrt(sumsqr(diff(NC(LI(i,:),:)))), 1:size(LI,1));
-L1 = arrayfun(@(i) sqrt(sumsqr(diff(NC(LI(i,:),:)+D(LI(i,:),:)))), 1:size(LI,1));
-dL = L1-L0;
-S = dL(:).*eMat(:);
+L0 = arrayfun(@(i) sqrt(sum(diff(NC(LI(i,:),:)).^2)), 1:size(LI,1));
+L1 = arrayfun(@(i) sqrt(sum(diff(NC(LI(i,:),:)+D(LI(i,:),:)).^2)), 1:size(LI,1));
+dL = L1-L0;                        %change in length
+S = (dL(:)./L0(:)).*eMat(:);      %axial stress = strain * modulus
 
 if plotme
 % Plot Results

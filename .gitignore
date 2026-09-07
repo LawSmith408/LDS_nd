@@ -1,0 +1,18 @@
+# MATLAB
+*.asv
+*.m~
+*.autosave
+*.mex*
+slprj/
+sccprj/
+codegen/
+octave-workspace
+
+# Stray workspace dumps
+matlab.mat
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/

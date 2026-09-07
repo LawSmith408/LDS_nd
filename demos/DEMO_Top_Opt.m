@@ -2,6 +2,7 @@
 %Author - Lawrence Smith
 
 clear; clc; close all
+setupLDS    %put src/, demos/ and input_meshes/ on the MATLAB path
 
 %generate a random trimesh in a box
 V = [-1 0; 1 0; 1 1; -1 1];
@@ -24,8 +25,8 @@ forced = find(sum((Vt-[0 1]).^2,2)<0.05);
 % plotV(Vt(fixed,:),'r.','markersize',30)
 
 
-%define load
-load = 0.01*[0 -1]';
+%define load (avoid the name "load" -- it shadows the LOAD builtin)
+loadVec = 0.01*[0 -1]';
 
 %initialize materials
 rho = 0.5*ones(size(edges(DT),1),1);
@@ -44,7 +45,7 @@ for i = 1:10
 eMat = Emin + rho.^p*(Emax-Emin);
 
 %solve for displacements
-[D,C] = LDS_Bar_Solver(DT,eMat,fixed,forced,load);
+[D,C] = LDS_Bar_Solver(DT,eMat,fixed,forced,loadVec);
 
 %compute stresses carried by each member
 S = deformedStressPlot(DT,D,eMat,0);
